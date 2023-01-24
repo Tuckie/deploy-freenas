@@ -230,24 +230,6 @@ if cert_id in cert_ids_expired:
 if cert_id in cert_ids_same_san:
   cert_ids_same_san.remove(cert_id)
 
-# Delete expired and old certificates with same SAN from freenas
-for cid in (cert_ids_same_san | cert_ids_expired):
-  r = session.delete(
-    BASE_URL + '/api/v2.0/certificate/id/' + str(cid),
-    verify=VERIFY
-  )
-
-  for c in cert_list:
-    if c['id'] == cid:
-      cert_name = c['name']
-
-  if r.status_code == 200:
-    print ("Deleting certificate " + cert_name + " successful")
-  else:
-    print ("Error deleting certificate " + cert_name + "!")
-    print (r.text)
-    sys.exit(1)
-
 # Reload minio with new cert
 if S3_ENABLED:
   r = session.post(
@@ -323,6 +305,23 @@ if APPS_ENABLED:
             print(f"Failed setting certificate for {app['name']}")
             print(r)
             sys.exit(1)
+# Delete expired and old certificates with same SAN from freenas
+for cid in (cert_ids_same_san | cert_ids_expired):
+  r = session.delete(
+    BASE_URL + '/api/v2.0/certificate/id/' + str(cid),
+    verify=VERIFY
+  )
+
+  for c in cert_list:
+    if c['id'] == cid:
+      cert_name = c['name']
+
+  if r.status_code == 200:
+    print ("Deleting certificate " + cert_name + " successful")
+  else:
+    print ("Error deleting certificate " + cert_name + "!")
+    print (r.text)
+    sys.exit(1)
 
 if UI_CERTIFICATE_ENABLED:
   # Reload nginx with new cert
